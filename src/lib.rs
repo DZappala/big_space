@@ -209,6 +209,7 @@ pub mod floating_origins;
 pub mod grid;
 pub mod hash;
 pub mod plugin;
+pub mod physics;
 pub mod timing;
 pub mod validation;
 pub mod world_query;
