@@ -13,7 +13,7 @@ pub mod partition;
 /// Add spatial hashing acceleration to `big_space`, accessible through the [`GridHashMap`] resource,
 /// and [`GridHash`] components.
 ///
-/// You can optionally add a [`GridHashMapFilter`] to this plugin, to only run the spatial hashing on
+/// You can optionally add a [`HashFilter`] to this plugin, to only run the spatial hashing on
 /// entities that match the query filter. This is useful if you only want to, say, compute hashes
 /// and insert in the [`GridHashMap`] for `Player` entities.
 ///
@@ -22,11 +22,11 @@ pub mod partition;
 /// overlapping filters.
 pub struct GridHashPlugin<F = ()>(PhantomData<F>)
 where
-    F: GridHashMapFilter;
+    F: HashFilter;
 
 impl<F> Plugin for GridHashPlugin<F>
 where
-    F: GridHashMapFilter,
+    F: HashFilter,
 {
     fn build(&self, app: &mut App) {
         app.init_resource::<GridHashMap<F>>()
@@ -46,7 +46,7 @@ where
     }
 }
 
-impl<F: GridHashMapFilter> Default for GridHashPlugin<F> {
+impl<F: HashFilter> Default for GridHashPlugin<F> {
     fn default() -> Self {
         Self(PhantomData)
     }
@@ -72,8 +72,8 @@ pub enum GridHashMapSystem {
 /// considered when building spatial hash maps. This is useful when you only care about querying
 /// certain entities, and want to avoid the plugin doing bookkeeping work for entities you don't
 /// care about.
-pub trait GridHashMapFilter: QueryFilter + Send + Sync + 'static {}
-impl<T: QueryFilter + Send + Sync + 'static> GridHashMapFilter for T {}
+pub trait HashFilter: QueryFilter + Send + Sync + 'static {}
+impl<T: QueryFilter + Send + Sync + 'static> HashFilter for T {}
 
 /// Used to manually track spatial hashes that have changed, for optimization purposes.
 ///
@@ -89,12 +89,12 @@ impl<T: QueryFilter + Send + Sync + 'static> GridHashMapFilter for T {}
 /// It may be possible to remove this if bevy gets archetype change detection, or observers that can
 /// react to a component being mutated. For now, this performs well enough.
 #[derive(Resource)]
-struct ChangedGridHashes<F: GridHashMapFilter> {
+struct ChangedGridHashes<F: HashFilter> {
     updated: Vec<Entity>,
     spooky: PhantomData<F>,
 }
 
-impl<F: GridHashMapFilter> Default for ChangedGridHashes<F> {
+impl<F: HashFilter> Default for ChangedGridHashes<F> {
     fn default() -> Self {
         Self {
             updated: Vec::new(),

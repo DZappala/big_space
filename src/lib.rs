@@ -198,9 +198,9 @@
 #![allow(clippy::type_complexity)]
 #![warn(missing_docs)]
 
-#[allow(unused_imports)] // For docs
+#[cfg(doc)]
 use bevy_transform::prelude::*;
-#[allow(unused_imports)] // For docs
+#[cfg(doc)]
 use prelude::*;
 
 pub mod bundles;
@@ -209,7 +209,6 @@ pub mod floating_origins;
 pub mod grid;
 pub mod hash;
 pub mod plugin;
-pub mod physics;
 pub mod timing;
 pub mod validation;
 pub mod world_query;
@@ -218,6 +217,9 @@ pub mod world_query;
 pub mod camera;
 #[cfg(feature = "debug")]
 pub mod debug;
+#[cfg(feature = "physics")]
+pub mod physics;
+
 #[cfg(test)]
 mod tests;
 

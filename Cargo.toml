@@ -9,11 +9,16 @@ repository = "https://github.com/aevyrie/big_space"
 documentation = "https://docs.rs/crate/big_space/latest"
 
 [features]
-default = []
-all = ["debug", "camera", "physics"] # Can't use all-features, integer type features are incompatible.
+default = ["all"]
+all = [
+    "debug",
+    "camera",
+    "physics",
+] # Can't use all-features, integer type features are incompatible.
 debug = ["bevy_gizmos", "bevy_color"]
 camera = ["bevy_render", "bevy_time", "bevy_input"]
-physics = ["rapier3d"]
+physics = ["rapier3d", "nalgebra", "downcast-rs"]
+serde-serialize = ["serde"]
 i8 = []
 i16 = []
 i32 = []
@@ -21,7 +26,7 @@ i64 = []
 i128 = []
 
 [dependencies]
-tracing = "0.1" # Less deps than pulling in bevy_log
+tracing = "0.1" # Fewer deps than pulling in bevy_log
 smallvec = "1.13.2" # Already used by bevy in commands
 bevy_app = { version = "0.15.0", default-features = false }
 bevy_ecs = { version = "0.15.0", default-features = true }
@@ -33,13 +38,21 @@ bevy_transform = { version = "0.15.0", default-features = false, features = [
     "bevy-support",
 ] }
 bevy_utils = { version = "0.15.0", default-features = false }
+
 # Optional
 bevy_color = { version = "0.15.0", default-features = false, optional = true }
 bevy_gizmos = { version = "0.15.0", default-features = false, optional = true }
 bevy_render = { version = "0.15.0", default-features = false, optional = true }
 bevy_input = { version = "0.15.0", default-features = false, optional = true }
 bevy_time = { version = "0.15.0", default-features = false, optional = true }
+serde = { version = "1", optional = true }
+
+# Optional - Physics
 rapier3d = { version = "0.23.0", optional = true }
+nalgebra = { version = "0.33", default-features = false, features = [
+    "convert-glam029",
+], optional = true }
+downcast-rs = { version = "2.0.1", optional = true }
 
 [dev-dependencies]
 big_space = { path = "", features = ["debug", "camera"] }
@@ -61,7 +74,6 @@ bevy = { version = "0.15.0", default-features = false, features = [
 noise = "0.9"
 turborand = "0.10"
 criterion = "0.5"
-bytemuck = "1.20"
 bevy_hanabi = "0.14"
 
 [[bench]]

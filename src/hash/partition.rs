@@ -1,4 +1,4 @@
-//! Detect and update groups of nearby occupied cells.
+//! Track groups of contiguously occupied [`GridCell`]s. See [`GridPartitionMap`].
 
 use std::{hash::Hash, marker::PhantomData, ops::Deref};
 
@@ -10,28 +10,20 @@ use bevy_utils::{
     Instant, PassHash,
 };
 
-use super::{GridCell, GridHash, GridHashMap, GridHashMapFilter, GridHashMapSystem};
+use super::{GridCell, GridHash, GridHashMap, GridHashMapSystem, HashFilter};
 
 pub use private::GridPartition;
 
 /// Adds support for spatial partitioning. Requires [`GridHashPlugin`](super::GridHashPlugin).
-pub struct GridPartitionPlugin<F = ()>(PhantomData<F>)
-where
-    F: GridHashMapFilter;
+pub struct GridPartitionPlugin<F: HashFilter = ()>(PhantomData<F>);
 
-impl<F> Default for GridPartitionPlugin<F>
-where
-    F: GridHashMapFilter,
-{
+impl<F: HashFilter> Default for GridPartitionPlugin<F> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<F> Plugin for GridPartitionPlugin<F>
-where
-    F: GridHashMapFilter,
-{
+impl<F: HashFilter> Plugin for GridPartitionPlugin<F> {
     fn build(&self, app: &mut App) {
         app.init_resource::<GridPartitionMap<F>>().add_systems(
             PostUpdate,
@@ -60,26 +52,33 @@ impl Hash for GridPartitionId {
     }
 }
 
-/// Groups connected [`GridCell`]s into [`GridPartition`]s.
+/// Groups contiguously occupied [`GridCell`]s into [`GridPartition`]s.
 ///
 /// Partitions divide space into independent groups of cells.
 ///
 /// The map depends on and is built from a corresponding [`GridHashMap`] with the same
-/// `F:`[`GridHashMapFilter`].
+/// `F:`[`HashFilter`].
+///
+/// Partitions are build on top of the [`GridHashMap`], only dealing with [`GridCell`]s. For
+/// performance reasons, partitions do not track grid occupancy at the `Entity` level. Instead,
+/// partitions are only concerned with which [`GridCell`] are occupied. To find what entities are
+/// present, you will need to look up each of the partition's [`GridHash`]s in the [`GridHashMap`]
 #[derive(Resource)]
 pub struct GridPartitionMap<F = ()>
 where
-    F: GridHashMapFilter,
+    F: HashFilter,
 {
     partitions: HashMap<GridPartitionId, GridPartition>,
     reverse_map: HashMap<GridHash, GridPartitionId, PassHash>,
+    // added: Vec<(GridPartitionId, GridHash)>,
+    // removed: Vec<(GridPartitionId, GridHash)>,
     next_partition: u64,
     spooky: PhantomData<F>,
 }
 
 impl<F> Default for GridPartitionMap<F>
 where
-    F: GridHashMapFilter,
+    F: HashFilter,
 {
     fn default() -> Self {
         Self {
@@ -93,7 +92,7 @@ where
 
 impl<F> Deref for GridPartitionMap<F>
 where
-    F: GridHashMapFilter,
+    F: HashFilter,
 {
     type Target = HashMap<GridPartitionId, GridPartition>;
 
@@ -104,7 +103,7 @@ where
 
 impl<F> GridPartitionMap<F>
 where
-    F: GridHashMapFilter,
+    F: HashFilter,
 {
     /// Returns a reference to the [`GridPartition`], if it exists.
     #[inline]
@@ -351,7 +350,10 @@ struct SplitResult {
     new_partitions: Vec<HashSet<GridHash, PassHash>>,
 }
 
-/// A private module to ensure the internal fields of the partition are not accessed directly.
+/// A private module to ensure the internal fields of the partition are not accessed directly from
+/// the outer module. While I could also move this to a standalone module file, this makes it very
+/// clear that the type is trying to uphold certain invariants, and to proceed with caution.
+///
 /// Needed to ensure invariants are upheld.
 mod private {
     use super::{GridCell, GridHash};
@@ -359,8 +361,7 @@ mod private {
     use bevy_ecs::prelude::*;
     use bevy_utils::{hashbrown::HashSet, PassHash};
 
-    /// A group of nearby [`GridCell`](crate::GridCell)s in an island disconnected from all other
-    /// [`GridCell`](crate::GridCell)s.
+    /// A group of nearby [`GridCell`]s on an island disconnected from all other [`GridCell`]s.
     #[derive(Debug)]
     pub struct GridPartition {
         grid: Entity,
@@ -519,7 +520,7 @@ mod private {
             {
                 self.min = min
             } else {
-                self.min = GridCell::ONE * 1e10f64 as GridPrecision;
+                self.min = GridCell::ONE * GridPrecision::MAX;
             }
         }
 
@@ -534,7 +535,7 @@ mod private {
             {
                 self.max = max
             } else {
-                self.min = GridCell::ONE * -1e10 as GridPrecision;
+                self.min = GridCell::ONE * GridPrecision::MIN;
             }
         }
     }

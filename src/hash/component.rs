@@ -9,7 +9,7 @@ use bevy_math::IVec3;
 use bevy_reflect::Reflect;
 use bevy_utils::{AHasher, Instant, Parallel};
 
-use super::{ChangedGridHashes, GridHashMapFilter};
+use super::{ChangedGridHashes, HashFilter};
 
 /// A fast but lossy version of [`GridHash`]. Use this component when you don't care about false
 /// positives (hash collisions). See the docs on [`GridHash::fast_eq`] for more details on fast but
@@ -155,8 +155,8 @@ impl GridHash {
     }
 
     /// Update or insert the [`GridHash`] of all changed entities that match the optional
-    /// [`GridHashMapFilter`].
-    pub(super) fn update<F: GridHashMapFilter>(
+    /// [`HashFilter`].
+    pub(super) fn update<F: HashFilter>(
         mut commands: Commands,
         mut changed_hashes: ResMut<ChangedGridHashes<F>>,
         mut spatial_entities: Query<
