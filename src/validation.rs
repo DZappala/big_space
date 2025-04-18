@@ -1,7 +1,7 @@
 //! Tools for validating high-precision transform hierarchies
 
 use bevy_ecs::prelude::*;
-use bevy_platform_support::{
+use bevy_platform::{
     collections::{HashMap, HashSet},
     prelude::*,
 };
@@ -146,7 +146,7 @@ pub trait ValidHierarchyNode: sealed::CloneHierarchy + Send + Sync {
 
 mod sealed {
     use super::ValidHierarchyNode;
-    use bevy_platform_support::prelude::*;
+    use bevy_platform::prelude::*;
 
     pub trait CloneHierarchy {
         fn clone_box(&self) -> Box<dyn ValidHierarchyNode>;

@@ -3,7 +3,7 @@
 use crate::prelude::*;
 use bevy_ecs::{prelude::*, relationship::Relationship};
 use bevy_math::{DVec3, IVec3};
-use bevy_platform_support::time::Instant;
+use bevy_platform::time::Instant;
 use bevy_reflect::prelude::*;
 use bevy_transform::prelude::*;
 
